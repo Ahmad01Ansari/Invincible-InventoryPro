@@ -14,6 +14,8 @@ export default function SalesPage() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showInvoiceId, setShowInvoiceId] = useState<string | null>(null);
+  const [paymentModal, setPaymentModal] = useState<{ id: string, amount: number } | null>(null);
+  const [payMethod, setPayMethod] = useState('cash');
   
   const [customerId, setCustomerId] = useState('');
   const [warehouseId, setWarehouseId] = useState('');
@@ -71,6 +73,17 @@ export default function SalesPage() {
     },
   });
 
+  const paymentMut = useMutation({
+    mutationFn: (d: { id: string, amount: number, paymentMethod: string }) => 
+      api.post(`/sales/${d.id}/payment`, { amount: d.amount, paymentMethod: d.paymentMethod }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      toast.success('Payment recorded successfully!');
+      setPaymentModal(null);
+    },
+    onError: () => toast.error('Failed to record payment'),
+  });
+
   const closeModal = () => {
     setShowModal(false);
     setCustomerId('');
@@ -121,11 +134,20 @@ export default function SalesPage() {
     { key: 'customerId', label: 'Customer', render: (i: any) => i.customerId?.name || '-' },
     { key: 'status', label: 'Status', render: (i: any) => <span className="capitalize">{i.status}</span> },
     { key: 'paymentStatus', label: 'Payment', render: (i: any) => (
-      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-        i.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' :
-        i.paymentStatus === 'partial' ? 'bg-orange-100 text-orange-700' :
-        'bg-red-100 text-red-700'
-      }`}>{i.paymentStatus.toUpperCase()}</span>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          if (i.paymentStatus !== 'paid') setPaymentModal({ id: i._id, amount: i.totalAmount });
+        }}
+        disabled={i.paymentStatus === 'paid'}
+        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold transition-opacity cursor-pointer disabled:cursor-default disabled:opacity-100 hover:opacity-80 ${
+          i.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' :
+          i.paymentStatus === 'partial' ? 'bg-orange-100 text-orange-700' :
+          'bg-red-100 text-red-700'
+        }`}
+      >
+        {i.paymentStatus.toUpperCase()}
+      </button>
     )},
     { key: 'totalAmount', label: 'Total', render: (i: any) => `₹${i.totalAmount?.toLocaleString()}` },
     { key: 'createdAt', label: 'Date', render: (i: any) => new Date(i.createdAt).toLocaleDateString() },
@@ -328,6 +350,40 @@ export default function SalesPage() {
               <p className="text-xs text-gray-500 font-medium tracking-wide">Thank you for your business!</p>
               <Button variant="outline" size="sm" className="bg-white border-gray-200 text-gray-800 hover:bg-gray-100 font-semibold" onClick={() => window.print()}>
                 Print/PDF
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {paymentModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in p-4">
+          <div className="bg-card text-card-foreground border rounded-lg shadow-xl w-full max-w-sm flex flex-col animate-scale-in">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-bold">Record Payment</h2>
+              <button onClick={() => setPaymentModal(null)}><X className="w-5 h-5 text-muted-foreground" /></button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="space-y-2">
+                <Label>Amount Due</Label>
+                <Input disabled value={`₹${paymentModal.amount.toLocaleString()}`} className="font-bold text-lg" />
+              </div>
+              <div className="space-y-2">
+                <Label>Payment Method</Label>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm" value={payMethod} onChange={e => setPayMethod(e.target.value)}>
+                  <option value="cash">Cash</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="card">Credit/Debit Card</option>
+                  <option value="upi">UPI</option>
+                </select>
+              </div>
+              <Button 
+                className="w-full mt-4" 
+                onClick={() => paymentMut.mutate({ id: paymentModal.id, amount: paymentModal.amount, paymentMethod: payMethod })}
+                disabled={paymentMut.isPending}
+              >
+                {paymentMut.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Confirm Status as Paid
               </Button>
             </div>
           </div>
