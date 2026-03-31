@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore - The react-joyride community typings cause ESM interop linting errors in strict mode
-import Joyride, { Step } from 'react-joyride';
+import * as JoyrideModule from 'react-joyride';
+import { Step } from 'react-joyride';
+// @ts-ignore
+const Joyride = ((JoyrideModule as any).default || (JoyrideModule as any).Joyride || JoyrideModule) as any;
 import { useAuthStore } from '@/stores/authStore';
 
 export default function WalkthroughTour() {
