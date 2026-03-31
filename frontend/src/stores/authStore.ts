@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
-      hasSeenTour: false,
+      hasSeenTour: true, // Default to true so legacy users don't see it
       
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
@@ -78,6 +78,7 @@ export const useAuthStore = create<AuthState>()(
             company,
             isAuthenticated: true,
             isLoading: false,
+            hasSeenTour: false, // Newly registered users MUST see the tour!
           });
         } catch (error: any) {
           set({
