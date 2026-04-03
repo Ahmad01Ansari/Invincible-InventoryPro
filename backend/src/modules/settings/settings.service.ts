@@ -69,11 +69,9 @@ export class SettingsService {
     });
 
     if (company) {
-      try {
-        await this.emailService.sendStaffInvitation(dto.email, dto.firstName, dto.password, company.name);
-      } catch (err) {
-        console.error('Failed to send staff invitation email:', err.message);
-      }
+      // Fire-and-forget: do not await email sending so the API responds immediately
+      this.emailService.sendStaffInvitation(dto.email, dto.firstName, dto.password, company.name)
+        .catch(err => console.error('Background email dispatch failed:', err.message));
     }
 
     const userObj: any = newUser.toObject();

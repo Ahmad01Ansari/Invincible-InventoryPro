@@ -238,13 +238,13 @@ export class AdminService implements OnModuleInit {
         });
       }
 
-      // Send Invitation Email
-      await this.emailService.sendStaffInvitation(
+      // Fire-and-forget invitation email so the UI responds immediately
+      this.emailService.sendStaffInvitation(
         dto.ownerEmail,
         dto.ownerFirstName,
         tempPassword,
         dto.name,
-      );
+      ).catch(err => this.logger.error(`Background invitation failed for ${dto.ownerEmail}: ${err.message}`));
 
       this.logger.log(`=================================================`);
       this.logger.log(`✅ COMPANY CREATED: ${dto.name}`);
