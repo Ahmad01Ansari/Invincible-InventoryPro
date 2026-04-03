@@ -1,25 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
   private readonly logger = new Logger(EmailService.name);
 
   constructor() {
-    // Using the official 'service: gmail' mode which handles port/host/SSL 
-    // automatically and is more resilient on cloud networks.
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER || 'rjaahmad60@gmail.com',
-        pass: process.env.EMAIL_PASSWORD || 'your-app-password',
-      },
-    });
+    // Initialize Resend with the API key from environment variables
+    const apiKey = process.env.RESEND_API_KEY || 're_123456789';
+    this.resend = new Resend(apiKey);
   }
 
   async sendStaffInvitation(to: string, firstName: string, tempPassword: string, companyName: string) {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    
+    // Note: Resend Free Tier requires sending from onboarding@resend.dev unless a domain is verified
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
     const htmlSnippet = `
       <div style="font-family: Arial, sans-serif; max-w-xl mx-auto border p-6 rounded shadow">
         <h2 style="color: #4F46E5;">Welcome to ${companyName}!</h2>
@@ -37,17 +35,22 @@ export class EmailService {
     `;
 
     try {
-      await this.transporter.sendMail({
-        from: `"InventoryPro Admin" <${process.env.EMAIL_USER || 'rjaahmad60@gmail.com'}>`,
-        to,
+      const { data, error } = await this.resend.emails.send({
+        from: `InventoryPro <${fromEmail}>`,
+        to: [to],
         subject: `Your Workspace Invitation for ${companyName}`,
         html: htmlSnippet,
       });
-      this.logger.log(`Invitation email systematically sent to ${to}`);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      this.logger.log(`Invitation email systematically sent to ${to} (ID: ${data?.id})`);
     } catch (error) {
-      this.logger.error(`Email dispatch failed to ${to}: ${error.message}`);
+      this.logger.error(`Resend API dispatch failed to ${to}: ${error.message}`);
       // Fallback: Dump to console so the admin can at least see it during development
-      console.log(`\n\n[DEV MODE - EMAIL SIMULATION]\nEmail to: ${to}\nTemp Password: ${tempPassword}\n\n`);
+      console.log(`\n\n[RESEND FALLBACK - EMAIL SIMULATION]\nEmail to: ${to}\nTemp Password: ${tempPassword}\n\n`);
     }
   }
 }
