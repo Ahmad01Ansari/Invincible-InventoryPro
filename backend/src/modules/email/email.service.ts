@@ -9,9 +9,9 @@ export class EmailService {
   constructor() {
     // Open source default testing Transport using the requested email as sender
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com', // Typically Gmail for personal sender accounts
-      port: 587,
-      secure: false,
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // Use SSL for port 465
       auth: {
         user: process.env.EMAIL_USER || 'rjaahmad60@gmail.com',
         pass: process.env.EMAIL_PASSWORD || 'your-app-password',
