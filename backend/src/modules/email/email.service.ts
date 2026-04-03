@@ -7,18 +7,15 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
 
   constructor() {
-    // Open source default testing Transport using the requested email as sender
+    // Using the official 'service: gmail' mode which handles port/host/SSL 
+    // automatically and is more resilient on cloud networks.
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true, // Use SSL for port 465
+      service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER || 'rjaahmad60@gmail.com',
         pass: process.env.EMAIL_PASSWORD || 'your-app-password',
       },
-      // Force IPv4 to prevent ENETUNREACH errors on cloud providers like Render
-      family: 4
-    } as any);
+    });
   }
 
   async sendStaffInvitation(to: string, firstName: string, tempPassword: string, companyName: string) {
