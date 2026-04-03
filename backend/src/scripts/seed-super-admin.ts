@@ -12,7 +12,7 @@ async function bootstrap() {
   const connectionService = app.get(TenantConnectionService);
 
   const adminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@saas.com';
-  const adminPassword = process.env.SUPER_ADMIN_PASSWORD || 'SuperAdmin2026!';
+  const adminPassword = process.env.SUPER_ADMIN_PASSWORD || 'SuperAdmin2027';
 
   console.log('--- Super Admin Seeding ---');
 
