@@ -11,22 +11,25 @@ export class EmailService {
     this.transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com', // Typically Gmail for personal sender accounts
       port: 587,
-      secure: false, 
+      secure: false,
       auth: {
-        user: 'rjaahmad60@gmail.com',
-        pass: process.env.EMAIL_PASSWORD || 'your-app-password', 
+        user: process.env.EMAIL_USER || 'rjaahmad60@gmail.com',
+        pass: process.env.EMAIL_PASSWORD || 'your-app-password',
       },
-    });
+      // Force IPv4 to prevent ENETUNREACH errors on cloud providers like Render
+      family: 4
+    } as any);
   }
 
   async sendStaffInvitation(to: string, firstName: string, tempPassword: string, companyName: string) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const htmlSnippet = `
       <div style="font-family: Arial, sans-serif; max-w-xl mx-auto border p-6 rounded shadow">
         <h2 style="color: #4F46E5;">Welcome to ${companyName}!</h2>
         <p>Hi ${firstName},</p>
         <p>You have been invited to join the <strong>${companyName}</strong> workspace on the SaaS Inventory Platform.</p>
         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
-          <p><strong>Login URL:</strong> <a href="http://localhost:5173/login">http://localhost:5173/login</a></p>
+          <p><strong>Login URL:</strong> <a href="${frontendUrl}/login">${frontendUrl}/login</a></p>
           <p><strong>Email:</strong> ${to}</p>
           <p><strong>Temporary Password:</strong> <span style="font-family: monospace; background: #e5e7eb; padding: 2px 5px;">${tempPassword}</span></p>
         </div>
@@ -38,7 +41,7 @@ export class EmailService {
 
     try {
       await this.transporter.sendMail({
-        from: '"SaaS Admin" <rjaahmad60@gmail.com>',
+        from: `"InventoryPro Admin" <${process.env.EMAIL_USER || 'rjaahmad60@gmail.com'}>`,
         to,
         subject: `Your Workspace Invitation for ${companyName}`,
         html: htmlSnippet,
